@@ -1,0 +1,16 @@
+# 第三方原始语料（575MB，通过 git clone aozorabunko_text 获取，见 README）
+/Tools/
+
+# 下载的元数据（可重新下载，见 README）
+/pipeline/data/
+
+# 生成产物（由 pipeline 脚本重建）
+/pipeline/out/parsed/
+/pipeline/out/preview.html
+/pipeline/out/missing-files.json
+
+# 依赖与系统文件
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
