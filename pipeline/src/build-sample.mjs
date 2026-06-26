@@ -32,7 +32,7 @@ const sample = picked.slice(0, N);
 
 const parsed = [];
 const failures = [];
-let totalRuby = 0, totalGaiji = 0, totalNote = 0, emptyBody = 0;
+let totalRuby = 0, totalGaiji = 0, totalNote = 0, emptyBody = 0, totalGaijiResolved = 0;
 
 for (const b of sample) {
   try {
@@ -40,6 +40,7 @@ for (const b of sample) {
     const result = parseAozora(buf);
     totalRuby += result.stats.ruby;
     totalGaiji += result.stats.gaiji;
+    totalGaijiResolved += result.stats.gaijiResolved;
     totalNote += result.stats.note;
     if (result.stats.lines === 0) emptyBody++;
     parsed.push({ book: b, result });
@@ -101,7 +102,8 @@ console.log('解析失败          :', failures.length);
 console.log('正文为空(疑似)    :', emptyBody);
 console.log('ruby 总数         :', totalRuby, `(均 ${(totalRuby / parsed.length).toFixed(0)}/本)`);
 console.log('注释 总数         :', totalNote);
-console.log('外字 总数         :', totalGaiji);
+console.log('外字 已还原        :', totalGaijiResolved, '<-- 转为真字符');
+console.log('外字 残留(〓)      :', totalGaiji);
 if (failures.length) {
   console.log('--- 失败样本 ---');
   failures.slice(0, 10).forEach(f => console.log(' ', f.file, f.error));

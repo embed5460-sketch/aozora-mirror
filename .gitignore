@@ -1,8 +1,9 @@
 # 第三方原始语料（575MB，通过 git clone aozorabunko_text 获取，见 README）
 /Tools/
 
-# 下载的元数据（可重新下载，见 README）
-/pipeline/data/
+# 下载的元数据（可重新下载，见 README）；但保留外字映射表（gaiji.mjs 运行时依赖，仅 312KB）
+/pipeline/data/*
+!/pipeline/data/jisx0213-2004-std.txt
 
 # 生成产物（由 pipeline 脚本重建）
 /pipeline/out/parsed/

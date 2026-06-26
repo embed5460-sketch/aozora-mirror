@@ -6,7 +6,9 @@
 //   《かな》          ルビ（振假名），附着到前方同字类的最长连续串
 //   ｜...《かな》      ｜显式指定 ruby 基串起点
 //   ［＃...］         入力者注：排版指令 / 傍点 / 外字说明等
-//   ※［＃...］        外字（字符集外字符），替换为占位符 〓 并保留说明
+//   ※［＃...］        外字：优先用 JIS X 0213 / U+ 还原为真字符，否则占位符 〓 + 说明
+
+import { resolveGaiji } from './gaiji.mjs';
 
 const DELIM = /^[-－―=]{10,}$/; // 凡例/底本分隔线（连续短横）
 
@@ -60,9 +62,15 @@ function parseLine(line, stats) {
       const end = line.indexOf('］', i);
       if (end !== -1) {
         const note = line.slice(i + 3, end); // 去掉 ※［＃
-        flushText();
-        runs.push({ gaiji: '〓', note });
-        stats.gaiji++;
+        const resolved = resolveGaiji(note);
+        if (resolved !== null) {
+          buf += resolved;                 // 还原成功 → 当作普通文本并入
+          stats.gaijiResolved++;
+        } else {
+          flushText();
+          runs.push({ gaiji: '〓', note }); // 无法还原 → 保留占位符 + 说明
+          stats.gaiji++;
+        }
         i = end;
         continue;
       }
@@ -166,7 +174,7 @@ export function parseAozora(buf) {
   const colophon = lines.slice(bodyEnd).filter(l => l.trim());
 
   // --- 3. 逐行解析正文 ---
-  const stats = { ruby: 0, note: 0, gaiji: 0, lines: 0 };
+  const stats = { ruby: 0, note: 0, gaiji: 0, gaijiResolved: 0, lines: 0 };
   const body = [];
   for (let j = bodyStart; j < bodyEnd; j++) {
     const line = lines[j];
