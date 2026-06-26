@@ -10,6 +10,9 @@
 /pipeline/out/preview.html
 /pipeline/out/missing-files.json
 
+# Cloudflare 部署产物（由 build-catalog.mjs 重建，数千文件/上百MB）
+/cdn/
+
 # 依赖与系统文件
 node_modules/
 *.log

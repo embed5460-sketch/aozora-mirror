@@ -55,7 +55,22 @@ node pipeline/src/build-index.mjs
 
 # 4. 抽样解析 + 生成预览（浏览器打开 pipeline/out/preview.html 验证 ruby 渲染）
 node pipeline/src/build-sample.mjs 100
+
+# 5. 构建 Cloudflare 可部署的数据层 cdn/（精选首发 4,798 本）
+node pipeline/src/build-catalog.mjs            # 精选(curated)
+# node pipeline/src/build-catalog.mjs --full   # 全量 18,081 本
 ```
+
+## 数据层 cdn/
+
+`build-catalog.mjs` 按[数据契约 v1](Document/DATA-CONTRACT.md)产出 Cloudflare Pages 站点B
+可直接部署的目录树：`meta.json` + `catalog/{authors,books}.json` + `books/{id}.json`。
+
+精选首发口径（[curation.mjs](pipeline/src/curation.mjs)）：**名家白名单 ∩ 新字新仮名**，
+共 **4,798 本 / 42 位作者**，全为现代假名、对学习者友好。可改 `--full` 出全量。
+
+外字：可还原的（JIS X 0213 / U+ 码位，约 63%）已在解析阶段还原为真字符；
+约 37% 无码位外字以占位符 `〓` + 描述保留。
 
 ## 数据结构（books-index.json 单条）
 
