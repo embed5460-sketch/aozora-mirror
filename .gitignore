@@ -13,6 +13,17 @@
 # Cloudflare 部署产物（由 build-catalog.mjs 重建，数千文件/上百MB）
 /cdn/
 
+# Android 构建产物与本机配置
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/captures/
+/android/local.properties
+/android/.kotlin/
+/android/app/release/
+*.apk
+*.aab
+
 # 依赖与系统文件
 node_modules/
 *.log
