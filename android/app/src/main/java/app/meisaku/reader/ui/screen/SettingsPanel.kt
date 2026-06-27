@@ -48,5 +48,21 @@ fun ReaderSettingsPanel(modifier: Modifier = Modifier) {
             Text("夜間モード", style = MaterialTheme.typography.labelLarge)
             Switch(checked = s.night, onCheckedChange = { store.setNight(it) })
         }
+
+        Row(
+            Modifier.fillMaxWidth().padding(top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text("ふりがな（自動）", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    "本文の漢字に読み仮名を自動表示",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(checked = s.autoFurigana, onCheckedChange = { store.setAutoFurigana(it) })
+        }
     }
 }

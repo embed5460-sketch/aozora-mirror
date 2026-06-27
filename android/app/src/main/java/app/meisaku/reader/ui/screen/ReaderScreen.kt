@@ -31,7 +31,10 @@ import app.meisaku.reader.Graph
 import app.meisaku.reader.data.model.Block
 import app.meisaku.reader.data.model.BlockKind
 import app.meisaku.reader.data.model.BookDoc
+import app.meisaku.reader.furigana.FuriganaEngine
 import app.meisaku.reader.ui.reader.RubyParagraph
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +46,9 @@ fun ReaderScreen(
     var doc by remember(bookId) { mutableStateOf<BookDoc?>(null) }
     var error by remember(bookId) { mutableStateOf<String?>(null) }
     var showSettings by remember { mutableStateOf(false) }
+    // 实际渲染的 blocks：自动注音关→原文；开→后台 kuromoji 生成后替换。
+    var displayBlocks by remember(bookId) { mutableStateOf<List<Block>?>(null) }
+    var annotating by remember(bookId) { mutableStateOf(false) }
 
     androidx.compose.runtime.LaunchedEffect(bookId) {
         doc = null; error = null
@@ -50,6 +56,25 @@ fun ReaderScreen(
             doc = Graph.books.load(bookId)
         } catch (e: Exception) {
             error = e.message ?: "読み込みに失敗しました"
+        }
+    }
+
+    androidx.compose.runtime.LaunchedEffect(doc, settings.autoFurigana) {
+        val d = doc
+        if (d == null) {
+            displayBlocks = null
+        } else if (!settings.autoFurigana) {
+            displayBlocks = d.blocks
+            annotating = false
+        } else {
+            annotating = true
+            val annotated = withContext(Dispatchers.Default) {
+                d.blocks.map { b ->
+                    if (b.runs.isEmpty()) b else b.copy(runs = FuriganaEngine.annotateRuns(b.runs))
+                }
+            }
+            displayBlocks = annotated
+            annotating = false
         }
     }
 
@@ -73,7 +98,18 @@ fun ReaderScreen(
                     modifier = Modifier.align(Alignment.Center).padding(24.dp),
                 )
                 doc == null -> LoadingBox(Modifier.fillMaxSize())
-                else -> BookBody(doc!!, settings.fontSizeSp, settings.lineSpacingMult)
+                else -> BookBody(
+                    doc!!,
+                    displayBlocks ?: doc!!.blocks,
+                    settings.fontSizeSp,
+                    settings.lineSpacingMult,
+                )
+            }
+            // 首次自动注音时词典加载/分词需片刻，顶部给个细进度条。
+            if (annotating) {
+                androidx.compose.material3.LinearProgressIndicator(
+                    Modifier.fillMaxWidth().align(Alignment.TopCenter),
+                )
             }
         }
     }
@@ -89,7 +125,7 @@ fun ReaderScreen(
 }
 
 @Composable
-private fun BookBody(doc: BookDoc, fontSizeSp: Float, lineSpacingMult: Float) {
+private fun BookBody(doc: BookDoc, blocks: List<Block>, fontSizeSp: Float, lineSpacingMult: Float) {
     val baseColor = MaterialTheme.colorScheme.onBackground
     val accent = MaterialTheme.colorScheme.primary
     val subColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -130,7 +166,7 @@ private fun BookBody(doc: BookDoc, fontSizeSp: Float, lineSpacingMult: Float) {
             }
             Spacer(Modifier.height(20.dp))
         }
-        itemsIndexed(doc.blocks) { _, block ->
+        itemsIndexed(blocks) { _, block ->
             BlockView(block, baseStyle, headingStyle, lineSpacingMult)
         }
         item { Spacer(Modifier.height(48.dp)) }

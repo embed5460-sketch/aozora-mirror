@@ -48,6 +48,8 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // kuromoji 的两个 jar 都带文档资源，重复路径需排除
+            excludes += "/META-INF/{CONTRIBUTORS.md,LICENSE.md,NOTICE.md}"
         }
     }
 }
@@ -67,6 +69,7 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
+    implementation(libs.kuromoji.ipadic)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
