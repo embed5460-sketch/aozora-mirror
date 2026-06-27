@@ -10,8 +10,10 @@
 /pipeline/out/preview.html
 /pipeline/out/missing-files.json
 
-# Cloudflare 部署产物（由 build-catalog.mjs 重建，数千文件/上百MB）
-/cdn/
+# 部署产物（Vercel 静态托管，Root Directory=cdn）：catalog/meta.json 入库；
+# 正文 JSON 体量大（~257MB/4798 文件），试水阶段先 git add -f 放入子集验证链路，
+# 全量上线时再删除下面这行放开 books/。
+/cdn/books/*
 
 # Android 构建产物与本机配置
 /android/.gradle/
