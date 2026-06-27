@@ -8,16 +8,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -38,6 +41,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import app.meisaku.reader.Graph
 import app.meisaku.reader.data.CatalogRepository
+import app.meisaku.reader.data.ProgressEntry
 import app.meisaku.reader.data.model.Author
 import app.meisaku.reader.ui.component.AuthorAvatar
 
@@ -50,6 +54,7 @@ fun LibraryScreen(
 ) {
     val catalog = rememberCatalog()
     var query by remember { mutableStateOf(TextFieldValue("")) }
+    val recent by Graph.reading.progress
 
     Scaffold(
         topBar = {
@@ -76,6 +81,13 @@ fun LibraryScreen(
                     }
                 }
                 Column(Modifier.padding(padding).fillMaxSize()) {
+                    if (q.isEmpty() && recent.isNotEmpty()) {
+                        ContinueReadingSection(
+                            recent = recent,
+                            onBook = onBook,
+                            onRemove = { Graph.reading.removeProgress(it) },
+                        )
+                    }
                     OutlinedTextField(
                         value = query,
                         onValueChange = { query = it },
@@ -100,6 +112,71 @@ fun LibraryScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ContinueReadingSection(
+    recent: List<ProgressEntry>,
+    onBook: (String) -> Unit,
+    onRemove: (String) -> Unit,
+) {
+    Text(
+        "続きを読む",
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp),
+    )
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items(recent, key = { it.bookId }) { entry ->
+            ContinueCard(entry, onClick = { onBook(entry.bookId) }, onRemove = { onRemove(entry.bookId) })
+        }
+    }
+}
+
+@Composable
+private fun ContinueCard(entry: ProgressEntry, onClick: () -> Unit, onRemove: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.width(168.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Box {
+            Column(Modifier.padding(14.dp)) {
+                Text(
+                    entry.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    entry.author,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+                Spacer(Modifier.height(10.dp))
+                LinearProgressIndicator(
+                    progress = { entry.fraction.coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "${(entry.fraction * 100).toInt()}%",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            TextButton(
+                onClick = onRemove,
+                modifier = Modifier.align(Alignment.TopEnd),
+            ) { Text("×", style = MaterialTheme.typography.titleMedium) }
         }
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import app.meisaku.reader.data.BookRepository
 import app.meisaku.reader.data.CatalogRepository
 import app.meisaku.reader.data.FuriganaQuota
+import app.meisaku.reader.data.ReadingStore
 import app.meisaku.reader.data.SettingsStore
 
 /** 极简手动依赖容器（进程级单例）。MainActivity 启动时 init。 */
@@ -16,6 +17,8 @@ object Graph {
         private set
     lateinit var quota: FuriganaQuota
         private set
+    lateinit var reading: ReadingStore
+        private set
 
     fun init(context: Context) {
         if (::catalog.isInitialized) return
@@ -24,5 +27,6 @@ object Graph {
         books = BookRepository(app)
         settings = SettingsStore(app)
         quota = FuriganaQuota(app)
+        reading = ReadingStore(app)
     }
 }

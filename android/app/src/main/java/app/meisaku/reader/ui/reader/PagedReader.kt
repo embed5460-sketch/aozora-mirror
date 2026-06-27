@@ -61,6 +61,10 @@ fun PagedReader(
     chromeVisible: Boolean,
     onToggleChrome: () -> Unit,
     modifier: Modifier = Modifier,
+    initialAtomIndex: Int = 0,
+    onProgress: (atomIndex: Int, fraction: Float, snippet: String) -> Unit = { _, _, _ -> },
+    jumpToAtom: Int? = null,
+    onJumpHandled: () -> Unit = {},
 ) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
@@ -78,6 +82,8 @@ fun PagedReader(
 
     var pages by remember { mutableStateOf<List<Page>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
+    // 首次分页用外部传入的续读位置定位；之后重排用 live 锚点保持当前位置。
+    var hasAppliedInitial by remember { mutableStateOf(false) }
     val pagerState = rememberPagerState(pageCount = { pages.size })
 
     BoxWithConstraints(modifier.fillMaxSize().background(bg)) {
@@ -87,8 +93,9 @@ fun PagedReader(
         val contentH = constraints.maxHeight - padY * 2f
 
         LaunchedEffect(blocks, fontSizeSp, lineSpacingMult, vertical, contentW, contentH) {
-            // 重排前抓当前页首原子序号做锚点，重排后跳回同一阅读位置。
-            val anchor = pages.getOrNull(pagerState.currentPage)?.firstAtomIndex ?: 0
+            // 续读：首次用 initialAtomIndex；重排：抓当前页首原子做锚点跳回同一位置。
+            val anchor = if (!hasAppliedInitial) initialAtomIndex
+            else pages.getOrNull(pagerState.currentPage)?.firstAtomIndex ?: 0
             loading = true
             val newPages = withContext(Dispatchers.Default) {
                 paginate(
@@ -100,7 +107,24 @@ fun PagedReader(
             loading = false
             if (newPages.isNotEmpty()) {
                 pagerState.scrollToPage(newPages.pageOfAtom(anchor).coerceIn(0, newPages.size - 1))
+                hasAppliedInitial = true
             }
+        }
+
+        // 翻页/续读后回传当前位置（atomIndex + 进度% + 当页摘要），供保存进度与加书签。
+        LaunchedEffect(pagerState.currentPage, pages) {
+            if (pages.isEmpty()) return@LaunchedEffect
+            val page = pages.getOrNull(pagerState.currentPage) ?: return@LaunchedEffect
+            val fraction = if (pages.size <= 1) 1f else pagerState.currentPage.toFloat() / (pages.size - 1)
+            onProgress(page.firstAtomIndex, fraction, snippetOf(page))
+        }
+
+        // 书签跳转（一次性）。
+        LaunchedEffect(jumpToAtom, pages) {
+            val target = jumpToAtom ?: return@LaunchedEffect
+            if (pages.isEmpty()) return@LaunchedEffect
+            pagerState.scrollToPage(pages.pageOfAtom(target).coerceIn(0, pages.size - 1))
+            onJumpHandled()
         }
 
         when {
@@ -163,6 +187,17 @@ fun PagedReader(
             }
         }
     }
+}
+
+/** 取当页开头的正文字符作书签摘要（跳过 ruby 小字），截断到 ~24 字。 */
+private fun snippetOf(page: Page): String {
+    val sb = StringBuilder()
+    for (g in page.glyphs) {
+        if (g.ruby) continue
+        sb.append(g.layout.layoutInput.text.text)
+        if (sb.length >= 24) break
+    }
+    return sb.toString().trim().take(24)
 }
 
 /** 底部跳页条：页码 + 可拖动 Slider，随 chrome 显隐上下滑入滑出。 */

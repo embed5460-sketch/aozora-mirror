@@ -16,8 +16,8 @@ import app.meisaku.reader.data.model.Run
  * 各 style，故测量结果可跨位置复用 → 用 [measure] 缓存大幅减少重复测量（长书才不卡）。
  */
 
-/** 页内一个已定位的字形（绝对坐标，单位 px）。 */
-class Glyph(val layout: TextLayoutResult, val x: Float, val y: Float)
+/** 页内一个已定位的字形（绝对坐标，单位 px）。[ruby] 为振假名小字（生成书签摘要时跳过）。 */
+class Glyph(val layout: TextLayoutResult, val x: Float, val y: Float, val ruby: Boolean = false)
 
 /** 一页：若干字形 + 该页首个原子的全局序号（用于改设置重排后保持阅读位置）。 */
 class Page(val glyphs: List<Glyph>, val firstAtomIndex: Int)
@@ -157,7 +157,7 @@ private fun paginateHorizontal(
         val baseX = x + (unitW - baseW) / 2f
         val rubyX = x + (unitW - rubyW) / 2f
         glyphs.add(Glyph(baseL, baseX, lineTop + rReserve))
-        rubyL?.let { glyphs.add(Glyph(it, rubyX, lineTop)) }
+        rubyL?.let { glyphs.add(Glyph(it, rubyX, lineTop, ruby = true)) }
         x += unitW
     }
     finishPage()
@@ -234,7 +234,7 @@ private fun paginateVertical(
             var ry = y + ((cy - y) - rTotal) / 2f
             for (rl in rubyLayouts) {
                 val rw = rl.size.width.toFloat()
-                glyphs.add(Glyph(rl, colRightX - rw, ry))
+                glyphs.add(Glyph(rl, colRightX - rw, ry, ruby = true))
                 ry += rl.size.height.toFloat()
             }
         }
