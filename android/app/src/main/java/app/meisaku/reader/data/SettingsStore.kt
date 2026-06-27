@@ -11,6 +11,8 @@ data class ReaderSettings(
     val night: Boolean = false,
     /** 全文自动振假名（端上 kuromoji 生成）。免费版后续接每日次数限制，付费无限。 */
     val autoFurigana: Boolean = false,
+    /** 縦書き（右起竖排）。关时为传统横排。两种都按页分页。 */
+    val verticalWriting: Boolean = false,
 ) {
     companion object {
         const val MIN_FONT = 14f
@@ -31,6 +33,7 @@ class SettingsStore(context: Context) {
             lineSpacingMult = prefs.getFloat(KEY_SPACING, 1.7f),
             night = prefs.getBoolean(KEY_NIGHT, false),
             autoFurigana = prefs.getBoolean(KEY_AUTO_FURIGANA, false),
+            verticalWriting = prefs.getBoolean(KEY_VERTICAL, false),
         )
     )
     val state: State<ReaderSettings> = _state
@@ -57,10 +60,16 @@ class SettingsStore(context: Context) {
         prefs.edit().putBoolean(KEY_AUTO_FURIGANA, on).apply()
     }
 
+    fun setVerticalWriting(on: Boolean) {
+        _state.value = _state.value.copy(verticalWriting = on)
+        prefs.edit().putBoolean(KEY_VERTICAL, on).apply()
+    }
+
     private companion object {
         const val KEY_FONT = "fontSizeSp"
         const val KEY_SPACING = "lineSpacingMult"
         const val KEY_NIGHT = "night"
         const val KEY_AUTO_FURIGANA = "autoFurigana"
+        const val KEY_VERTICAL = "verticalWriting"
     }
 }

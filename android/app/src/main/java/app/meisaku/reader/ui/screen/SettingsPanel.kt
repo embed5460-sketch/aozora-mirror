@@ -57,6 +57,22 @@ fun ReaderSettingsPanel(modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
+                Text("縦書き", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    "右から左へ縦組みで表示",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(checked = s.verticalWriting, onCheckedChange = { store.setVerticalWriting(it) })
+        }
+
+        Row(
+            Modifier.fillMaxWidth().padding(top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
                 Text("ふりがな（自動）", style = MaterialTheme.typography.labelLarge)
                 val sub = if (q.premium) "プレミアム · 無制限"
                 else "本文の漢字に自動表示 · 本日 残り ${q.remaining}/${FuriganaQuota.FREE_DAILY} 作品"
