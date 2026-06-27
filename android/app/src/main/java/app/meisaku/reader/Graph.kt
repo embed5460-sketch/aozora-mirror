@@ -3,6 +3,7 @@ package app.meisaku.reader
 import android.content.Context
 import app.meisaku.reader.data.BookRepository
 import app.meisaku.reader.data.CatalogRepository
+import app.meisaku.reader.data.FuriganaQuota
 import app.meisaku.reader.data.SettingsStore
 
 /** 极简手动依赖容器（进程级单例）。MainActivity 启动时 init。 */
@@ -13,6 +14,8 @@ object Graph {
         private set
     lateinit var settings: SettingsStore
         private set
+    lateinit var quota: FuriganaQuota
+        private set
 
     fun init(context: Context) {
         if (::catalog.isInitialized) return
@@ -20,5 +23,6 @@ object Graph {
         catalog = CatalogRepository(app)
         books = BookRepository(app)
         settings = SettingsStore(app)
+        quota = FuriganaQuota(app)
     }
 }

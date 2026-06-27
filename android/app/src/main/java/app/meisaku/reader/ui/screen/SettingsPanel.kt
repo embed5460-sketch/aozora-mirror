@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.meisaku.reader.Graph
+import app.meisaku.reader.data.FuriganaQuota
 import app.meisaku.reader.data.ReaderSettings
 
 /** 阅读设置面板，复用于设置页与阅读器内的快捷面板。 */
@@ -22,6 +23,7 @@ import app.meisaku.reader.data.ReaderSettings
 fun ReaderSettingsPanel(modifier: Modifier = Modifier) {
     val s by Graph.settings.state
     val store = Graph.settings
+    val q by Graph.quota.state
 
     Column(modifier.padding(16.dp)) {
         Text("文字サイズ  ${s.fontSizeSp.toInt()}sp", style = MaterialTheme.typography.labelLarge)
@@ -56,8 +58,10 @@ fun ReaderSettingsPanel(modifier: Modifier = Modifier) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text("ふりがな（自動）", style = MaterialTheme.typography.labelLarge)
+                val sub = if (q.premium) "プレミアム · 無制限"
+                else "本文の漢字に自動表示 · 本日 残り ${q.remaining}/${FuriganaQuota.FREE_DAILY} 作品"
                 Text(
-                    "本文の漢字に読み仮名を自動表示",
+                    sub,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

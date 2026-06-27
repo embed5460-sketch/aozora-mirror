@@ -1,6 +1,7 @@
 package app.meisaku.reader.ui.screen
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -30,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import app.meisaku.reader.Graph
 import app.meisaku.reader.data.model.Block
 import app.meisaku.reader.data.model.BlockKind
+import app.meisaku.reader.data.FuriganaQuota
 import app.meisaku.reader.data.model.BookDoc
 import app.meisaku.reader.furigana.FuriganaEngine
 import app.meisaku.reader.ui.reader.RubyParagraph
@@ -49,6 +52,8 @@ fun ReaderScreen(
     // 实际渲染的 blocks：自动注音关→原文；开→后台 kuromoji 生成后替换。
     var displayBlocks by remember(bookId) { mutableStateOf<List<Block>?>(null) }
     var annotating by remember(bookId) { mutableStateOf(false) }
+    // 自动注音开着、但今日免费次数用尽且本书未用过 → 显示原文并提示。
+    var quotaBlocked by remember(bookId) { mutableStateOf(false) }
 
     androidx.compose.runtime.LaunchedEffect(bookId) {
         doc = null; error = null
@@ -66,7 +71,13 @@ fun ReaderScreen(
         } else if (!settings.autoFurigana) {
             displayBlocks = d.blocks
             annotating = false
+            quotaBlocked = false
+        } else if (!Graph.quota.tryUse(bookId)) {
+            displayBlocks = d.blocks
+            annotating = false
+            quotaBlocked = true
         } else {
+            quotaBlocked = false
             annotating = true
             val annotated = withContext(Dispatchers.Default) {
                 d.blocks.map { b ->
@@ -98,12 +109,17 @@ fun ReaderScreen(
                     modifier = Modifier.align(Alignment.Center).padding(24.dp),
                 )
                 doc == null -> LoadingBox(Modifier.fillMaxSize())
-                else -> BookBody(
-                    doc!!,
-                    displayBlocks ?: doc!!.blocks,
-                    settings.fontSizeSp,
-                    settings.lineSpacingMult,
-                )
+                else -> Column(Modifier.fillMaxSize()) {
+                    if (quotaBlocked) QuotaBanner()
+                    Box(Modifier.weight(1f)) {
+                        BookBody(
+                            doc!!,
+                            displayBlocks ?: doc!!.blocks,
+                            settings.fontSizeSp,
+                            settings.lineSpacingMult,
+                        )
+                    }
+                }
             }
             // 首次自动注音时词典加载/分词需片刻，顶部给个细进度条。
             if (annotating) {
@@ -121,6 +137,22 @@ fun ReaderScreen(
         ) {
             ReaderSettingsPanel()
         }
+    }
+}
+
+@Composable
+private fun QuotaBanner() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+    ) {
+        Text(
+            "本日の無料ふりがなは ${FuriganaQuota.FREE_DAILY} 作品まで使い切りました。" +
+                "設定からプレミアムにすると無制限にご利用いただけます。",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        )
     }
 }
 
