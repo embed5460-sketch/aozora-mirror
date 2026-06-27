@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  仅允许向 localhost 的明文 HTTP（开发期 adb reverse 本机 CDN 调试用）。
+  生产环境 localhost 不可达，故对线上无影响；线上 CDN 走 HTTPS。
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>
