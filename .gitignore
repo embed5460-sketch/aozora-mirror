@@ -10,10 +10,9 @@
 /pipeline/out/preview.html
 /pipeline/out/missing-files.json
 
-# 部署产物（Vercel 静态托管，Root Directory=cdn）：catalog/meta.json 入库；
-# 正文 JSON 体量大（~257MB/4798 文件），试水阶段先 git add -f 放入子集验证链路，
-# 全量上线时再删除下面这行放开 books/。
-/cdn/books/*
+# 部署产物全量入库（Vercel 静态托管，Root Directory=cdn）：catalog/meta.json +
+# 4798 本正文 JSON 全部跟踪。链路已验证：git push → Gitee → GitHub 镜像 → Vercel。
+# 注：cdn/ 由 pipeline 的 build-catalog.mjs 重建，但因走 git 镜像部署需常驻仓库。
 
 # Android 构建产物与本机配置
 /android/.gradle/
