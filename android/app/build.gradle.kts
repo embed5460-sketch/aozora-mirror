@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
     implementation(libs.kuromoji.ipadic)
+    implementation(libs.billing.ktx)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
