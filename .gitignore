@@ -25,6 +25,12 @@
 *.apk
 *.aab
 
+# Release 签名密钥与口令（绝不入库；丢失=无法更新 App，须仓库外备份）
+/android/keystore.properties
+/android/keystore/
+*.jks
+*.keystore
+
 # 依赖与系统文件
 node_modules/
 *.log
