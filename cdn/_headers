@@ -1,0 +1,11 @@
+# Cloudflare Pages 缓存头。内容为版本化静态 JSON。
+# 单本正文按 ID 稳定，长缓存；catalog/meta 预留较短缓存（当前客户端读内置 assets，未来接 CDN 版本协商时生效）。
+
+/books/*
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+
+/catalog/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+/meta.json
+  Cache-Control: public, max-age=300
