@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -159,7 +160,14 @@ fun PagedReader(
                     ) {
                         Canvas(Modifier.fillMaxSize()) {
                             for (g in page.glyphs) {
-                                drawText(g.layout, topLeft = Offset(g.x + padX, g.y + padY))
+                                val tl = Offset(g.x + padX, g.y + padY)
+                                if (g.rotate) {
+                                    rotate(degrees = 90f, pivot = tl) {
+                                        drawText(g.layout, topLeft = tl)
+                                    }
+                                } else {
+                                    drawText(g.layout, topLeft = tl)
+                                }
                             }
                         }
                     }
