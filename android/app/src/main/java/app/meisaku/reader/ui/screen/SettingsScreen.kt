@@ -23,7 +23,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import android.app.Activity
 import android.content.ContextWrapper
+import android.content.Intent
+import android.net.Uri
 import app.meisaku.reader.Graph
+import app.meisaku.reader.data.Config
 
 /** 从 Compose 的 Context 解包出宿主 Activity（启动内购流程需要）。 */
 private fun android.content.Context.findActivity(): Activity? {
@@ -58,7 +61,8 @@ fun SettingsScreen(onBack: () -> Unit) {
             // プレミアム（Play Billing 一次性内购）
             val q by Graph.quota.state
             val billing by Graph.billing.state
-            val activity = LocalContext.current.findActivity()
+            val context = LocalContext.current
+            val activity = context.findActivity()
             Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
                 Text("プレミアム", style = MaterialTheme.typography.labelLarge)
                 Text(
@@ -102,6 +106,28 @@ fun SettingsScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(16.dp),
             )
+
+            // 法務リンク（站点A 部署 + LEGAL_BASE 回填後に表示）
+            if (Config.hasLegal()) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.Start,
+                ) {
+                    TextButton(onClick = { context.openUrl(Config.PRIVACY_URL) }) {
+                        Text("プライバシーポリシー")
+                    }
+                    TextButton(onClick = { context.openUrl(Config.TERMS_URL) }) {
+                        Text("利用規約")
+                    }
+                }
+            }
         }
     }
+}
+
+/** 外部ブラウザで URL を開く。 */
+private fun android.content.Context.openUrl(url: String) {
+    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    })
 }

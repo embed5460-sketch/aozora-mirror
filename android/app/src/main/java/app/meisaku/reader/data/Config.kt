@@ -9,5 +9,17 @@ object Config {
      */
     const val CDN_BASE: String = "https://aozora-mirror.vercel.app"
 
+    /**
+     * 法務ページ（站点A）：Vercel 静态托管，Root Directory=legal。
+     * /index.html=プライバシーポリシー、/terms.html=利用規約。末尾不带斜杠。
+     * 与 CDN 不同 Vercel 项目（同一仓库镜像，Root Directory=legal）。
+     */
+    const val LEGAL_BASE: String = "https://aozora-privacy.vercel.app"
+
+    val PRIVACY_URL: String get() = "$LEGAL_BASE/index.html"
+    val TERMS_URL: String get() = "$LEGAL_BASE/terms.html"
+
     fun hasCdn(): Boolean = CDN_BASE.isNotBlank()
+
+    fun hasLegal(): Boolean = LEGAL_BASE.isNotBlank()
 }

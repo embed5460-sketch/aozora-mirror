@@ -1,0 +1,144 @@
+/* 名作文庫 — 法務ページ共通スタイル。零構築・無 JS・日系審美。 */
+:root {
+  --ink: #2b2b2b;
+  --sub: #5f5b54;
+  --bg: #f7f4ee;
+  --card: #fffdf8;
+  --line: #e3ddd1;
+  --accent: #7c2d2d; /* 落ち着いた臙脂 */
+  --link: #1f5673;
+  --maxw: 720px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Hiragino Sans",
+    "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+  line-height: 1.9;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+}
+
+/* ヘッダー */
+header.site {
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+header.site .inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 20px 20px 16px;
+}
+header.site .brand {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+nav.legal {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 0.9rem;
+}
+nav.legal a {
+  color: var(--link);
+  text-decoration: none;
+}
+nav.legal a[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 700;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 2px;
+}
+nav.legal a:hover { text-decoration: underline; }
+
+/* 本文 */
+main {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 28px 20px 64px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  letter-spacing: 0.06em;
+  margin: 8px 0 4px;
+}
+.updated {
+  color: var(--sub);
+  font-size: 0.82rem;
+  margin: 0 0 24px;
+}
+
+h2 {
+  font-size: 1.12rem;
+  margin: 34px 0 10px;
+  padding-left: 12px;
+  border-left: 4px solid var(--accent);
+}
+
+p, li { color: var(--ink); }
+ul { padding-left: 1.25em; }
+li { margin: 4px 0; }
+
+a { color: var(--link); }
+
+.lead {
+  color: var(--sub);
+  font-size: 0.95rem;
+}
+
+/* 注意・引用ブロック */
+.notice {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  padding: 16px 18px;
+  margin: 20px 0;
+  font-size: 0.95rem;
+}
+.notice .label {
+  display: block;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+/* プレースホルダ（公開前に差し替え） */
+.placeholder {
+  background: #fff3cd;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-style: normal;
+}
+
+/* フッター */
+footer.site {
+  border-top: 1px solid var(--line);
+  background: var(--card);
+}
+footer.site .inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 20px;
+  font-size: 0.82rem;
+  color: var(--sub);
+}
+footer.site a { color: var(--link); }
+
+@media (max-width: 480px) {
+  body { font-size: 15px; }
+  main { padding: 22px 16px 48px; }
+  h1 { font-size: 1.3rem; }
+}
