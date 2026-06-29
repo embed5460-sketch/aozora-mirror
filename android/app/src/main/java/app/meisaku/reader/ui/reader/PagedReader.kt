@@ -90,8 +90,12 @@ fun PagedReader(
     BoxWithConstraints(modifier.fillMaxSize().background(bg)) {
         val padX = with(density) { 22.dp.toPx() }
         val padY = with(density) { 16.dp.toPx() }
+        // 底部常驻留白：页码/进度条(PageScrubber) 以 BottomCenter 叠在内容之上，
+        // 若文字排到列底会被其不透明背景遮没（最末一行字「消失」）。故版心下缘上抬 [footer]，
+        // 让任何一列的末字都落在 chrome 之上，永不被遮。chrome 显隐不改变分页，不触发重排。
+        val footer = with(density) { 56.dp.toPx() }
         val contentW = constraints.maxWidth - padX * 2f
-        val contentH = constraints.maxHeight - padY * 2f
+        val contentH = constraints.maxHeight - padY - footer
 
         LaunchedEffect(blocks, fontSizeSp, lineSpacingMult, vertical, contentW, contentH) {
             // 续读：首次用 initialAtomIndex；重排：抓当前页首原子做锚点跳回同一位置。
