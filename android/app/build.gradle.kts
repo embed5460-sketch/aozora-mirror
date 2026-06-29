@@ -17,6 +17,9 @@ plugins {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
+        // play-services-ads 25.x 用更新的 Kotlin 编译，跳过 metadata 版本校验即可读取
+        // （本项目 Kotlin 2.1.20 < SDK 的 2.3.0；仅放宽校验，不改项目 Kotlin 版本）。
+        freeCompilerArgs.add("-Xskip-metadata-version-check")
     }
 }
 
@@ -94,6 +97,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.kuromoji.ipadic)
     implementation(libs.billing.ktx)
+    implementation(libs.play.services.ads)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

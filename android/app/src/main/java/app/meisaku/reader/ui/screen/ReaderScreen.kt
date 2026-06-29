@@ -32,8 +32,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.app.Activity
+import android.content.ContextWrapper
 import app.meisaku.reader.Graph
 import app.meisaku.reader.data.FuriganaQuota
 import app.meisaku.reader.data.model.Block
@@ -61,6 +64,8 @@ fun ReaderScreen(
     var annotating by remember(bookId) { mutableStateOf(false) }
     // 自动注音开着、但今日免费次数用尽且本书未用过 → 显示原文并提示。
     var quotaBlocked by remember(bookId) { mutableStateOf(false) }
+    // 看激励广告解锁本书后 +1，触发重新注音。
+    var reload by remember(bookId) { mutableStateOf(0) }
 
     // 续读位置（打开时取一次）、当前位置/摘要（供保存进度与加书签）、书签跳转。
     val initialAtom = remember(bookId) { Graph.reading.getProgress(bookId)?.atomIndex ?: 0 }
@@ -77,7 +82,7 @@ fun ReaderScreen(
         }
     }
 
-    androidx.compose.runtime.LaunchedEffect(doc, settings.autoFurigana) {
+    androidx.compose.runtime.LaunchedEffect(doc, settings.autoFurigana, reload) {
         val d = doc
         if (d == null) {
             displayBlocks = null
@@ -133,8 +138,22 @@ fun ReaderScreen(
                 doc == null -> LoadingBox(Modifier.fillMaxSize())
                 else -> {
                     val d = doc!!
+                    val adState by Graph.ads.state
+                    val context = LocalContext.current
                     Column(Modifier.fillMaxSize()) {
-                        if (quotaBlocked) QuotaBanner()
+                        if (quotaBlocked) {
+                            QuotaBanner(
+                                rewardedReady = adState.rewardedReady,
+                                onWatchAd = {
+                                    context.findActivity()?.let { act ->
+                                        Graph.ads.showRewarded(act) {
+                                            Graph.quota.unlockBook(bookId)
+                                            reload++
+                                        }
+                                    }
+                                },
+                            )
+                        }
                         Box(Modifier.weight(1f)) {
                             PagedReader(
                                 blocks = displayBlocks ?: d.blocks,
@@ -252,18 +271,39 @@ private fun BookmarkSheet(
     }
 }
 
+/** 从 Compose 的 Context 解包宿主 Activity（展示全屏广告需要）。 */
+private fun android.content.Context.findActivity(): Activity? {
+    var c = this
+    while (c is ContextWrapper) {
+        if (c is Activity) return c
+        c = c.baseContext
+    }
+    return null
+}
+
+/**
+ * 今日免费注音用尽时的横幅。[rewardedReady] 为真时给出「広告を見て表示」按钮，看完解锁本作品；
+ * 否则只显示文字提示（引导去买 premium）。
+ */
 @Composable
-private fun QuotaBanner() {
+private fun QuotaBanner(rewardedReady: Boolean, onWatchAd: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.tertiaryContainer,
     ) {
-        Text(
-            "本日の無料ふりがなは ${FuriganaQuota.FREE_DAILY} 作品まで使い切りました。" +
-                "設定からプレミアムにすると無制限にご利用いただけます。",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onTertiaryContainer,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-        )
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+            Text(
+                "本日の無料ふりがなは ${FuriganaQuota.FREE_DAILY} 作品まで使い切りました。" +
+                    "広告を見るとこの作品のふりがなを表示できます（設定からプレミアムにすると無制限）。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+            )
+            if (rewardedReady) {
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = onWatchAd, modifier = Modifier.fillMaxWidth()) {
+                    Text("広告を見てこの作品のふりがなを表示")
+                }
+            }
+        }
     }
 }

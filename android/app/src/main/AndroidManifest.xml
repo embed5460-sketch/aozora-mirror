@@ -13,6 +13,12 @@
         android:supportsRtl="false"
         android:theme="@style/Theme.MeisakuReader">
 
+        <!-- AdMob 应用 ID（真实值，账号 edenwang180703 / pub-7291783059496091）。
+             开发期广告请求用 Google 测试广告位 ID（见 AdsManager），点测试广告不会封号。 -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-7291783059496091~5464600738" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

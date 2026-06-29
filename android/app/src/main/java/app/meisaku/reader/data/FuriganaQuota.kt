@@ -44,6 +44,19 @@ class FuriganaQuota(context: Context) {
         _state.value = snapshot()
     }
 
+    /**
+     * 看激励广告解锁：把 [bookId] 加入今日已用集合，使其立即放行注音，且**不占用新增配额**
+     * （集合里的书 [tryUse]/[canUse] 直接返回 true；其余未解锁的新书仍按 [FREE_DAILY] 受限）。
+     */
+    fun unlockBook(bookId: String) {
+        rolloverIfNeeded()
+        val used = usedBooks().toMutableSet()
+        if (used.add(bookId)) {
+            prefs.edit().putStringSet(KEY_BOOKS, used).apply()
+            _state.value = snapshot()
+        }
+    }
+
     /** 当天能否为 [bookId] 启用注音（只查不消耗）。 */
     fun canUse(bookId: String): Boolean {
         if (premium) return true

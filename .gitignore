@@ -36,3 +36,8 @@ node_modules/
 *.log
 .DS_Store
 Thumbs.db
+
+# 调试草稿（adb 截图 / 临时拉取的书 JSON / 编辑器配置）
+.adb_*.png
+.book*.json
+.vscode/

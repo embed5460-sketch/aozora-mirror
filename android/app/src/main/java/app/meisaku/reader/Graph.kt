@@ -1,6 +1,7 @@
 package app.meisaku.reader
 
 import android.content.Context
+import app.meisaku.reader.data.AdsManager
 import app.meisaku.reader.data.BillingManager
 import app.meisaku.reader.data.BookRepository
 import app.meisaku.reader.data.CatalogRepository
@@ -22,6 +23,8 @@ object Graph {
         private set
     lateinit var billing: BillingManager
         private set
+    lateinit var ads: AdsManager
+        private set
 
     fun init(context: Context) {
         if (::catalog.isInitialized) return
@@ -37,5 +40,7 @@ object Graph {
             onPremiumRevoked = { quota.reclaimPurchasedPremium() },
         )
         billing.start()
+        ads = AdsManager(app, isPremium = { quota.premium })
+        ads.initialize()
     }
 }
