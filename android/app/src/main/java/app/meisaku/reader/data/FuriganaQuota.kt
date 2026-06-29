@@ -22,8 +22,25 @@ class FuriganaQuota(context: Context) {
 
     val premium: Boolean get() = prefs.getBoolean(KEY_PREMIUM, false)
 
+    /** 调试开关：直接切 premium（不标记来源，故不受退款回收影响）。商品上架前测无限振假名用。 */
     fun setPremium(on: Boolean) {
         prefs.edit().putBoolean(KEY_PREMIUM, on).apply()
+        _state.value = snapshot()
+    }
+
+    /** 真实购买确认持有：解锁并标记来源为购买（退款/撤销时据此只回收购买所得）。 */
+    fun markPremiumOwned() {
+        prefs.edit().putBoolean(KEY_PREMIUM, true).putBoolean(KEY_VIA_PURCHASE, true).apply()
+        _state.value = snapshot()
+    }
+
+    /**
+     * 退款/撤销回收：仅当 premium 来自购买（[KEY_VIA_PURCHASE]）时关闭并清来源标记；
+     * 调试开关设的 premium 不动。由 Billing 权威查询确认未持有时调用。
+     */
+    fun reclaimPurchasedPremium() {
+        if (!prefs.getBoolean(KEY_VIA_PURCHASE, false)) return
+        prefs.edit().putBoolean(KEY_PREMIUM, false).putBoolean(KEY_VIA_PURCHASE, false).apply()
         _state.value = snapshot()
     }
 
@@ -77,6 +94,7 @@ class FuriganaQuota(context: Context) {
     companion object {
         const val FREE_DAILY = 3
         private const val KEY_PREMIUM = "premium"
+        private const val KEY_VIA_PURCHASE = "premiumViaPurchase"
         private const val KEY_DATE = "date"
         private const val KEY_BOOKS = "booksToday"
     }

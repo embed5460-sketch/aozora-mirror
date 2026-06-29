@@ -31,7 +31,11 @@ object Graph {
         settings = SettingsStore(app)
         quota = FuriganaQuota(app)
         reading = ReadingStore(app)
-        billing = BillingManager(app) { quota.setPremium(true) }
+        billing = BillingManager(
+            app,
+            onPremiumOwned = { quota.markPremiumOwned() },
+            onPremiumRevoked = { quota.reclaimPurchasedPremium() },
+        )
         billing.start()
     }
 }

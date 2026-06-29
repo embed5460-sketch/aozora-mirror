@@ -32,12 +32,14 @@ import kotlinx.coroutines.launch
  *  - 真实购买需 Play Console 创建商品 [PRODUCT_PREMIUM] 并把 APK 传到内部测试轨、
  *    用 License Tester 账号测试。商品未配置时 [state].available=false，UI 显示「準備中」。
  *  - 设备无 Google Play 服务（部分国行机）时连接会失败 → 同样降级为「準備中」，不崩。
- *  - 拥有时回调 [onPremiumOwned] 解锁；未拥有不强制关闭（保留调试开关）。退款/撤销的
- *    回收逻辑后续再补。
+ *  - 拥有时回调 [onPremiumOwned] 解锁。退款/撤销回收：启动 [restorePurchases] 是权威查询，
+ *    查询成功且确认未持有时回调 [onPremiumRevoked]（仅回收购买所得，不动调试开关）；
+ *    查询失败（离线/无 GMS）不做任何回收，避免误伤已购用户。
  */
 class BillingManager(
     context: Context,
     private val onPremiumOwned: () -> Unit,
+    private val onPremiumRevoked: () -> Unit = {},
 ) {
     data class UiState(
         val connected: Boolean = false,
@@ -102,12 +104,25 @@ class BillingManager(
         )
     }
 
+    /**
+     * 权威恢复：列出当前持有的内购。确认持有 → 解锁(+ 必要时 acknowledge)；确认未持有 → 回收
+     * （退款/撤销后购买消失于此列表）。查询失败时直接返回、不回收，避免离线误伤已购用户。
+     */
     private fun restorePurchases() = scope.launch {
         val params = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.INAPP)
             .build()
         val result = client.queryPurchasesAsync(params)
-        result.purchasesList.forEach { handlePurchase(it) }
+        if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) return@launch
+        val owned = result.purchasesList.any {
+            PRODUCT_PREMIUM in it.products && it.purchaseState == Purchase.PurchaseState.PURCHASED
+        }
+        if (owned) {
+            result.purchasesList.forEach { handlePurchase(it) }
+        } else {
+            _state.value = _state.value.copy(owned = false)
+            onPremiumRevoked()
+        }
     }
 
     /** 发起购买；需 Activity 上下文。商品未就绪则忽略。 */
