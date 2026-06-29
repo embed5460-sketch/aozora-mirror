@@ -214,7 +214,8 @@ private fun paginateVertical(
     }
 
     var first = true
-    for (a in atoms) {
+    for (i in atoms.indices) {
+        val a = atoms[i]
         if (a.blank) {
             if (!first) newColumn(a.index)
             continue
@@ -277,8 +278,22 @@ private fun paginateVertical(
         if (recipe.isEmpty()) continue
         val adv = c
 
-        // 2) 该原子放不下当前列剩余空间 → 换列（单原子超过整页则强排，避免死循环）。
-        if (y > 0f && y + adv > pageH) newColumn(a.index)
+        // 2) 断列判定（禁則は全て「追い出し」で処理 ＝ オーバーフローさせない／クリップで消えない）。
+        //    单原子超过整页则强排（避免死循环）。一格先読み（次原子の最初の符号だけ判定、
+        //    配方の再計算は不要）で「この原子を列末に置くと不都合」な場合は手前で改列：
+        //    ・行末禁則：a 自身が開き括弧 → 列末に残さない。
+        //    ・行頭禁則：a の次が句読点・閉じ括弧・小書き仮名等で、a の後にもう入らない →
+        //      その禁則字が次列頭に孤立するのを防ぐため、a ごと次列へ送る（a と禁則字が連れ立つ）。
+        //    次字高は全角 cellH で近似（行頭禁則字は全て 1 セル相当なので妥当）。
+        if (y > 0f) {
+            if (y + adv > pageH) {
+                newColumn(a.index)
+            } else if (y + adv + cellH > pageH) { // a は列末候補
+                val next = atoms.getOrNull(i + 1)
+                val orphanNext = next != null && !next.blank && !next.paragraphStart && isNoStart(next)
+                if (isNoEnd(a) || orphanNext) newColumn(a.index)
+            }
+        }
 
         // 3) 收页后再用最终 colLeft 落绝对坐标。
         val colLeft = colRightX - colWidth
@@ -344,6 +359,31 @@ private fun classifyCp(cp: Int): CpKind = when (cp) {
     in ROTATE_CW -> CpKind.RotateCW
     else -> CpKind.PlainStack // ！？・小假名・漢字假名
 }
+
+// --- 禁則処理（縦書き断列規則） ---
+
+/** 行頭禁則：列頭に来られない文字（句読点・閉じ括弧・小書き仮名・ー々〜・等）→ 追い込み(ぶら下げ)。 */
+private val KINSOKU_NO_START: Set<Int> = buildSet {
+    addAll(listOf(0x3002, 0x3001, 0xFF0C, 0xFF0E, 0xFF61, 0xFF64))                 // 。、，．｡､
+    addAll(listOf(0xFF1A, 0xFF1B, 0xFF1F, 0xFF01, 0x30FB, 0xFF65))                 // ：；？！・･
+    addAll(listOf(0x30FC, 0x3005, 0x301C, 0xFF5E, 0x309D, 0x309E, 0x30FD, 0x30FE)) // ー々〜～ゝゞヽヾ
+    addAll(listOf(0x2026, 0x2025))                                                  // …‥
+    addAll(listOf(0x300D, 0x300F, 0xFF09, 0x0029, 0x3011, 0x3015, 0xFF3D, 0x005D)) // 」』）)】〕］]
+    addAll(listOf(0xFF5D, 0x007D, 0x3009, 0x300B, 0x3017, 0x301F, 0x301E))         // ｝}〉》〗〟〞
+    // 小書き仮名
+    addAll(listOf(0x3041, 0x3043, 0x3045, 0x3047, 0x3049, 0x3063, 0x3083, 0x3085, 0x3087, 0x308E, 0x3095, 0x3096))
+    addAll(listOf(0x30A1, 0x30A3, 0x30A5, 0x30A7, 0x30A9, 0x30C3, 0x30E3, 0x30E5, 0x30E7, 0x30EE, 0x30F5, 0x30F6))
+}
+
+/** 行末禁則：列末に残せない文字（開き括弧）→ 追い出し（手前で改列）。 */
+private val KINSOKU_NO_END: Set<Int> = setOf(
+    0x300C, 0x300E, 0xFF08, 0x0028, 0x3010, 0x3014, 0xFF3B, 0x005B, // 「『（([【〔［
+    0xFF5B, 0x007B, 0x3008, 0x300A, 0x3016, 0x301D, 0x301A,         // ｛{〈《〖〝〚
+)
+
+private fun Atom.firstCp(): Int = if (text.isEmpty()) -1 else text.codePointAt(0)
+private fun isNoStart(a: Atom): Boolean = a.ruby == null && a.firstCp() in KINSOKU_NO_START
+private fun isNoEnd(a: Atom): Boolean = a.ruby == null && a.firstCp() in KINSOKU_NO_END
 
 // --- 工具 ---
 
